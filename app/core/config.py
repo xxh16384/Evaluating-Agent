@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     LLM_API_URL: str
     LLM_API_KEY: str
     LLM_MODEL_NAME: str
+    
+    # 评测结果存储配置（Redis）
+    REDIS_URL: str = "redis://localhost:6379/0"
 
     # 指定去哪里找 .env 文件
     model_config = SettingsConfigDict(
