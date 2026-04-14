@@ -9,3 +9,9 @@ wheels/
 # Virtual environments
 .venv
 .env
+/评分样本/
+analyze_results.py
+batch_results.csv
+batch_score.py
+batch_results copy.csv
+decode_csv.py

@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from app.api.routes import router
 from app.core.config import settings
 
@@ -21,6 +23,10 @@ app.add_middleware(
 # 挂载路由，增加版本前缀
 app.include_router(router, prefix="/api/v1/evaluations")
 
+# 挂载静态文件目录
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 @app.get("/")
 async def root():
-    return {"message": "议论文评改智能体后端已就绪", "docs": "/docs"}
+    # 访问根目录时自动重定向到前端页面
+    return RedirectResponse(url="/static/index.html")

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>议论文评改智能体</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-labelledby="app-title">
+        <div class="intro">
+          <p class="eyebrow">Essay Evaluation Agent</p>
+          <h1 id="app-title">议论文评改智能体</h1>
+          <p class="lead">上传作文图片和题目要求，等待智能体完成 OCR、读者建模、逻辑图谱和交际效果评估。</p>
+        </div>
+
+        <form id="evaluation-form" class="input-panel">
+          <label class="field">
+            <span>作文题目与写作要求</span>
+            <textarea
+              id="prompt-text"
+              name="prompt_text"
+              rows="7"
+              placeholder="粘贴作文题目、材料或写作任务要求"
+              required
+            ></textarea>
+          </label>
+
+          <div class="field-row">
+            <label class="field compact">
+              <span>任务类型</span>
+              <select id="task-type" name="task_type">
+                <option value="自动判定">自动判定</option>
+                <option value="材料推断型">材料推断型</option>
+                <option value="明确对象型">明确对象型</option>
+              </select>
+            </label>
+
+            <label class="upload-box" for="essay-image">
+              <span class="upload-title">上传作文图片</span>
+              <span id="file-name" class="upload-note">支持 JPG、PNG、WEBP 等图片格式</span>
+              <input id="essay-image" name="image" type="file" accept="image/*" required />
+            </label>
+          </div>
+
+          <div class="preview-strip" aria-live="polite">
+            <img id="image-preview" alt="待评改作文预览" hidden />
+            <p id="empty-preview">图片预览会显示在这里。</p>
+          </div>
+
+          <div class="actions">
+            <button id="submit-button" type="submit">开始评改</button>
+            <button id="reset-button" type="button">重置</button>
+            <p id="form-status" role="status">等待提交</p>
+          </div>
+        </form>
+      </section>
+
+      <section class="runtime" aria-label="评改进度与结果">
+        <div class="progress-panel">
+          <div class="panel-heading">
+            <p class="eyebrow">Pipeline</p>
+            <h2>评改进度</h2>
+          </div>
+          <ol id="progress-list" class="progress-list"></ol>
+        </div>
+
+        <div id="error-panel" class="error-panel" hidden></div>
+
+        <section id="score-panel" class="score-band" hidden>
+          <div>
+            <p class="eyebrow">Score</p>
+            <h2 id="score-value">-- / 60</h2>
+          </div>
+          <p id="score-summary">完成后会在这里显示最终判定。</p>
+        </section>
+
+        <section class="result-grid">
+          <article class="result-card wide">
+            <div class="panel-heading">
+              <p class="eyebrow">Report</p>
+              <h2>诊断评语</h2>
+            </div>
+            <div id="diagnostic-report" class="markdown-output muted">评改完成后显示完整诊断。</div>
+          </article>
+
+          <article class="result-card">
+            <div class="panel-heading">
+              <p class="eyebrow">OCR</p>
+              <h2>识别文本</h2>
+            </div>
+            <pre id="ocr-output" class="text-output">尚未开始 OCR。</pre>
+          </article>
+
+          <article class="result-card">
+            <div class="panel-heading">
+              <p class="eyebrow">Reader</p>
+              <h2>读者画像</h2>
+            </div>
+            <div id="reader-context" class="key-value muted">等待语境建模。</div>
+          </article>
+
+          <article class="result-card wide">
+            <div class="panel-heading">
+              <p class="eyebrow">Focus</p>
+              <h2>语义图谱</h2>
+            </div>
+            <div id="semantic-graph" class="graph-area muted">等待图谱生成。</div>
+          </article>
+
+          <article class="result-card">
+            <div class="panel-heading">
+              <p class="eyebrow">Layer 1</p>
+              <h2>底层识别性</h2>
+            </div>
+            <div id="layer1-output" class="list-output muted">等待层级 1 扫描。</div>
+          </article>
+
+          <article class="result-card">
+            <div class="panel-heading">
+              <p class="eyebrow">Layer 3</p>
+              <h2>交际效果</h2>
+            </div>
+            <div id="layer3-output" class="key-value muted">等待交际评估。</div>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

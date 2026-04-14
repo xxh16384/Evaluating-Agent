@@ -92,33 +92,42 @@ async def execute_evaluation_task(task_id: str):
         await push_task_event(task_id, "layer3_evaluated", comm_effect.model_dump())
 
         # ==========================================
-        # 节点 6: 最终算法结算 (完全保留用户原始算法逻辑)
+        # 节点 6: 最终算法结算与评语生成 (模块五)
         # ==========================================
-        logger.info(f"Task {task_id} - [7/7] 最终统分结算...")
-        base_rate = 1.0
-        diagnostic_lines = []
+        logger.info(f"Task {task_id} - 正在进行最终统分结算...")
+        
+        # 1. 贴近高考常模的加减分算法
+        base_score = 45.0  # 基础起评分
+        diagnostic_lines = [] 
 
+        # -- 层级 1 扣分（单次扣1分，上限扣5分）
+        l1_deduction = 0
         for eval_chunk in layer1_report.evaluations:
-            if eval_chunk.is_recognizable == 0:
-                base_rate -= 0.05
-                diagnostic_lines.append(f"- 表达障碍：{eval_chunk.deduction_reason} (第{eval_chunk.chunk_index}句)")
-            if eval_chunk.has_coherence == 0:
-                base_rate -= 0.05
-                diagnostic_lines.append(f"- 衔接断裂：{eval_chunk.deduction_reason} (第{eval_chunk.chunk_index}句)")
+            if eval_chunk.is_recognizable == 0 or eval_chunk.has_coherence == 0:
+                l1_deduction += 1
+                reason = eval_chunk.deduction_reason
+                diagnostic_lines.append(f"- [表达] 阻碍：{reason} (第{eval_chunk.chunk_index}句)")
+        base_score -= min(5.0, l1_deduction)
 
+        # -- 层级 2 扣分（单次扣2分，上限扣10分）
+        l2_deduction = 0
         for node in semantic_graph.node_chains:
             if node.is_isolated == 1:
-                base_rate -= 0.1
-                diagnostic_lines.append(f"- 游离废话：节点 '{node.edge_node}' 属于孤岛节点。")
+                l2_deduction += 2
+                diagnostic_lines.append(f"- [逻辑] 游离：节点 '{node.edge_node}' 为孤岛废话。")
             elif node.intermediary_count < 1 or node.intermediary_count > 5:
-                base_rate -= 0.05
-                diagnostic_lines.append(f"- 逻辑层级异常：节点 '{node.edge_node}' 推导层级异常。")
+                l2_deduction += 1
+                diagnostic_lines.append(f"- [逻辑] 异常：节点 '{node.edge_node}' 推导层级不合理。")
+        base_score -= min(10.0, l2_deduction)
 
-        base_rate = max(0.0, min(1.0, base_rate))
-        if comm_effect.has_information_meaning == 0 or comm_effect.has_action_meaning == 0:
-            base_rate *= 0.6
+        # -- 层级 3 奖励（达成一项加5分）
+        if comm_effect.has_information_meaning == 1:
+            base_score += 5.0
+        if comm_effect.has_action_meaning == 1:
+            base_score += 5.0
 
-        final_score = round(base_rate * 60.0, 1)
+        # 确保总分在 [0, 60] 之间
+        final_score = round(max(0.0, min(60.0, base_score)), 1)
         report_text = f"### 得分判定：{final_score}分 / 60分\n\n"
         # ... (此处省略部分 report_text 拼接代码，实际运行时请保留你原有的完整逻辑)
         report_text += f"**【交际效果判定】**\n信息意义：{'✅' if comm_effect.has_information_meaning else '❌'} | 行动意义：{'✅' if comm_effect.has_action_meaning else '❌'}\n\n"
